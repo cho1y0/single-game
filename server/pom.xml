@@ -42,6 +42,14 @@
     <build>
         <!-- 기획서의 폴더 구조(src, web)를 Maven에 인식시키는 설정 -->
         <sourceDirectory>src</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
