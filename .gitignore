@@ -47,6 +47,7 @@
 .project
 server/bin/
 server/build/
+server/.smarttomcat/
 
 # ==========================================
 # 3. 보안 및 기타 환경 변수
