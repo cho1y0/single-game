@@ -1,0 +1,56 @@
+# ==========================================
+# 1. Unity (Client) 무시 목록
+# ==========================================
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# 유니티 자동 생성 메타데이터 및 설정 파일 무시
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# ==========================================
+# 2. Java / Tomcat (Server) 무시 목록
+# ==========================================
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDE 설정 파일
+.idea/
+.settings/
+.classpath
+.project
+server/bin/
+server/build/
+
+# ==========================================
+# 3. 보안 및 기타 환경 변수
+# ==========================================
+.env
+*.properties
+.DS_Store
