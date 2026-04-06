@@ -114,9 +114,13 @@ public class MixServlet extends HttpServlet {
                     Long newHenchUid = null;
                     if (isSuccess) {
                         // 7. 성공 시: 결과 헨치 추가 (1레벨, 보관함 슬롯 0번)
-                        String insertSql = "INSERT INTO tb_user_hench (user_id, monster_id, level, exp, equip_slot) VALUES (?, ?, 1, 0, 0)";
+                        // 기획서 4.1 항목에 맞게 랜덤 성향(Prefix) 부여
+                        String[] prefixes = {"힘쎈", "날쎈", "정확한", "운좋은", "속성강한"};
+                        String randomPrefix = prefixes[random.nextInt(prefixes.length)];
+                        
+                        String insertSql = "INSERT INTO tb_user_hench (user_id, monster_id, level, exp, prefix, equip_slot) VALUES (?, ?, 1, 0, ?, 0)";
                         try (PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-                            pstmt.setString(1, userId); pstmt.setInt(2, resultMonsterId);
+                            pstmt.setString(1, userId); pstmt.setInt(2, resultMonsterId); pstmt.setString(3, randomPrefix);
                             pstmt.executeUpdate();
                             try (ResultSet rs = pstmt.getGeneratedKeys()) {
                                 if (rs.next()) newHenchUid = rs.getLong(1);

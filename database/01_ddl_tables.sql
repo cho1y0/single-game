@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS tb_user_inventory (
     user_id VARCHAR(50) NOT NULL,
     item_id INT NOT NULL COMMENT '아이템 고유 ID',
     quantity INT DEFAULT 1 COMMENT '보유 수량',
-    FOREIGN KEY (user_id) REFERENCES tb_user(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES tb_user(user_id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, item_id) -- 같은 유저의 동일 아이템은 한 줄로 합치기 위함
 ) ENGINE=InnoDB COMMENT='유저 아이템 보관함';
 
 -- 14. 믹스 마스터리 기록

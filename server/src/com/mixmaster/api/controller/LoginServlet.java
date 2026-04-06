@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -63,6 +65,59 @@ public class LoginServlet extends HttpServlet {
                             userData.put("level", rs.getInt("level"));
                             userData.put("gold", rs.getInt("gold"));
                             userData.put("current_map_id", rs.getInt("current_map_id"));
+
+                            // 4-1. 인벤토리 정보 로드 추가
+                            List<Map<String, Object>> inventory = new ArrayList<>();
+                            String invSql = "SELECT item_id, quantity FROM tb_user_inventory WHERE user_id = ?";
+                            try (PreparedStatement invStmt = conn.prepareStatement(invSql)) {
+                                invStmt.setString(1, userId);
+                                try (ResultSet invRs = invStmt.executeQuery()) {
+                                    while (invRs.next()) {
+                                        Map<String, Object> item = new HashMap<>();
+                                        item.put("item_id", invRs.getInt("item_id"));
+                                        item.put("quantity", invRs.getInt("quantity"));
+                                        inventory.add(item);
+                                    }
+                                }
+                            }
+                            userData.put("inventory", inventory);
+
+                            // 4-2. 헨치 정보 로드 추가
+                            List<Map<String, Object>> henches = new ArrayList<>();
+                            String henchSql = "SELECT hench_uid, monster_id, level, exp, prefix, equip_slot FROM tb_user_hench WHERE user_id = ?";
+                            try (PreparedStatement henchStmt = conn.prepareStatement(henchSql)) {
+                                henchStmt.setString(1, userId);
+                                try (ResultSet henchRs = henchStmt.executeQuery()) {
+                                    while (henchRs.next()) {
+                                        Map<String, Object> hench = new HashMap<>();
+                                        hench.put("hench_uid", henchRs.getLong("hench_uid"));
+                                        hench.put("monster_id", henchRs.getInt("monster_id"));
+                                        hench.put("level", henchRs.getInt("level"));
+                                        hench.put("exp", henchRs.getInt("exp"));
+                                        hench.put("prefix", henchRs.getString("prefix"));
+                                        hench.put("equip_slot", henchRs.getInt("equip_slot"));
+                                        henches.add(hench);
+                                    }
+                                }
+                            }
+                            userData.put("henches", henches);
+
+                            // 4-3. 마스터리 정보 로드 추가
+                            List<Map<String, Object>> masteries = new ArrayList<>();
+                            String masterySql = "SELECT tier, mastery_point, is_master FROM tb_mix_mastery WHERE user_id = ?";
+                            try (PreparedStatement masteryStmt = conn.prepareStatement(masterySql)) {
+                                masteryStmt.setString(1, userId);
+                                try (ResultSet masteryRs = masteryStmt.executeQuery()) {
+                                    while (masteryRs.next()) {
+                                        Map<String, Object> mastery = new HashMap<>();
+                                        mastery.put("tier", masteryRs.getInt("tier"));
+                                        mastery.put("mastery_point", masteryRs.getInt("mastery_point"));
+                                        mastery.put("is_master", masteryRs.getInt("is_master"));
+                                        masteries.add(mastery);
+                                    }
+                                }
+                            }
+                            userData.put("masteries", masteries);
 
                             resp.getWriter().write(ApiResponse.success(userData).toJson());
                         } else {
