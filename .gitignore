@@ -13,6 +13,7 @@
 
 # Visual Studio 및 기타 에디터 찌꺼기 파일들
 .vs/
+.idea/
 .gradle/
 ExportedObj/
 .consulo/
@@ -44,3 +45,7 @@ ExportedObj/
 sysinfo.txt
 crashlytics-build.properties
 *.pdata
+
+# OS 생성 파일 (Windows/macOS)
+Thumbs.db
+.DS_Store
