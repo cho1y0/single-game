@@ -60,4 +60,32 @@ public class NetworkManager : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// 서버로 GET 요청을 보내는 공통 함수
+    /// </summary>
+    public void GetRequest(string endpoint, Action<string> onSuccess, Action<string> onError)
+    {
+        StartCoroutine(SendGetRequest(endpoint, onSuccess, onError));
+    }
+
+    private IEnumerator SendGetRequest(string endpoint, Action<string> onSuccess, Action<string> onError)
+    {
+        string url = BASE_URL + endpoint;
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.LogError($"[Network Error] {request.error}");
+                onError?.Invoke(request.error);
+            }
+            else
+            {
+                Debug.Log($"[Network Success] {request.downloadHandler.text}");
+                onSuccess?.Invoke(request.downloadHandler.text);
+            }
+        }
+    }
 }
