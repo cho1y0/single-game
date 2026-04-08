@@ -8,8 +8,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.UUID;
 import com.google.gson.Gson;
+import com.mixmaster.util.DatabaseUtil;
 
 /**
  * 로그인 API 처리 서블릿 (엔드포인트: /api/auth/login)
@@ -88,12 +92,25 @@ public class LoginServlet extends HttpServlet {
 
     // [보안 고려사항 B] SQL Injection 방지를 위한 PreparedStatement 사용 예시 뼈대
     private boolean checkDatabaseForUser(String username, String password) {
-        // TODO: 향후 DB 연결이 완료되면 아래와 같은 형태로 구현합니다.
-        // String sql = "SELECT id FROM tb_user WHERE username = ? AND password = ?";
-        // PreparedStatement pstmt = conn.prepareStatement(sql);
-        // pstmt.setString(1, username); ...
 
-        // 임시 하드코딩 테스트용 통과 조건
-        return "test".equals(username) && "1234".equals(password);
+        // mixmaster 데이터베이스의 tb_user_auth 테이블에서 유저를 조회합니다.
+        String sql = "SELECT password FROM mixmaster.tb_user_auth WHERE username = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, username);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String dbPassword = rs.getString("password");
+                    return password.equals(dbPassword); // 유니티에서 온 비번과 DB 비번이 완벽히 똑같은지 비교
+                } else {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] DB 조회 중 오류: " + e.getMessage());
+            return false;
+        }
     }
 }

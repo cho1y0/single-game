@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro; // TextMeshPro 네임스페이스
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // 씬 전환을 위한 네임스페이스
 
 public class LoginUI : MonoBehaviour
 {
@@ -44,7 +45,8 @@ public class LoginUI : MonoBehaviour
 
             if (success)
             {
-                Debug.Log("[LoginUI] 로그인 성공! 다음 씬(마을 등)으로 넘어가는 로직을 여기에 구현하세요.");
+                Debug.Log("[LoginUI] 로그인 성공! 마지리타 마을로 이동합니다.");
+                SceneManager.LoadScene("Majirita"); // "Majirita" 씬으로 전환
             }
         });
     }
