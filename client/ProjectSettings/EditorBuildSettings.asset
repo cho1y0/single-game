@@ -11,6 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Majirita.unity
     guid: ddeb6e62759df454e8b878f4fbde7e15
+  - enabled: 1
+    path: Assets/Scenes/CharacterCreate.unity
+    guid: a0920c6f3e090c2448d2c7b515d34a69
+  - enabled: 1
+    path: Assets/Scenes/Majirita_Grassland.unity
+    guid: c2ef582a719478945b60a53f8ad0cf76
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

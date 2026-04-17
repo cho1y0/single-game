@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import com.google.gson.Gson;
 import com.mixmaster.util.DatabaseUtil;
@@ -32,11 +34,15 @@ public class LoginServlet extends HttpServlet {
         boolean success;
         String sessionKey;
         String message;
+        String nickname;
+        int level;
 
-        public LoginResponseDto(boolean success, String sessionKey, String message) {
+        public LoginResponseDto(boolean success, String sessionKey, String message, String nickname, int level) {
             this.success = success;
             this.sessionKey = sessionKey;
             this.message = message;
+            this.nickname = nickname;
+            this.level = level;
         }
     }
 
@@ -75,14 +81,30 @@ public class LoginServlet extends HttpServlet {
             // 로그인 성공: 세션 키(UUID) 발급
             String sessionKey = UUID.randomUUID().toString();
             
-            // TODO: 설계서에 명시된 tb_user_auth 테이블에 발급된 sessionKey와 접속 시간을 업데이트(UPDATE) 해야 함
-            System.out.println("[INFO] Login Success - SessionKey issued: " + sessionKey);
-
-            responseDto = new LoginResponseDto(true, sessionKey, "로그인에 성공했습니다.");
+            // DB에 발급된 sessionKey와 접속 시간을 업데이트(UPDATE)
+            boolean isUpdated = updateSessionKey(username, sessionKey);
+            
+            if (isUpdated) {
+                System.out.println("[INFO] Login Success - SessionKey issued and saved: " + sessionKey);
+                
+                // DB(tb_user)에서 유저 닉네임과 레벨 정보 가져오기
+                UserInfo userInfo = fetchUserInfo(username);
+                
+                responseDto = new LoginResponseDto(
+                        true, 
+                        sessionKey, 
+                        "로그인에 성공했습니다.", 
+                        userInfo.nickname, 
+                        userInfo.level
+                );
+            } else {
+                System.err.println("[ERROR] Login Failed - Failed to update SessionKey in DB.");
+                responseDto = new LoginResponseDto(false, "", "서버 오류로 세션을 생성하지 못했습니다.", "", 0);
+            }
         } else {
             // 로그인 실패
             System.out.println("[WARN] Login Failed - Invalid credentials for: " + username);
-            responseDto = new LoginResponseDto(false, "", "아이디 또는 비밀번호가 일치하지 않습니다.");
+            responseDto = new LoginResponseDto(false, "", "아이디 또는 비밀번호가 일치하지 않습니다.", "", 0);
         }
         
         // DTO를 JSON 문자열로 변환하여 응답
@@ -103,7 +125,8 @@ public class LoginServlet extends HttpServlet {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String dbPassword = rs.getString("password");
-                    return password.equals(dbPassword); // 유니티에서 온 비번과 DB 비번이 완벽히 똑같은지 비교
+                    // SHA-256으로 암호화된 비밀번호와 대조
+                    return hashPassword(password).equals(dbPassword); 
                 } else {
                     return false;
                 }
@@ -111,6 +134,64 @@ public class LoginServlet extends HttpServlet {
         } catch (Exception e) {
             System.err.println("[ERROR] DB 조회 중 오류: " + e.getMessage());
             return false;
+        }
+    }
+
+    // 발급된 세션 키와 현재 접속 시간을 DB에 업데이트하는 메서드
+    private boolean updateSessionKey(String username, String sessionKey) {
+        // NOW() 함수를 사용하여 MySQL 서버의 현재 시간을 last_login에 기록합니다.
+        String sql = "UPDATE mixmaster.tb_user_auth SET session_key = ?, last_login = NOW() WHERE username = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, sessionKey);
+            pstmt.setString(2, username);
+            return pstmt.executeUpdate() > 0; // 업데이트된 행(row)이 1개 이상이면 성공
+        } catch (Exception e) {
+            System.err.println("[ERROR] 세션 키 DB 업데이트 중 오류: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // 유저 정보를 담을 임시 클래스
+    private static class UserInfo {
+        String nickname = "";
+        int level = 0;
+    }
+
+    // tb_user 테이블에서 유저 정보를 조회하는 메서드
+    private UserInfo fetchUserInfo(String username) {
+        UserInfo info = new UserInfo();
+        String sql = "SELECT nickname, level FROM mixmaster.tb_user WHERE username = ?";
+        
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    info.nickname = rs.getString("nickname");
+                    info.level = rs.getInt("level");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] 유저 정보(tb_user) 조회 중 오류: " + e.getMessage());
+        }
+        return info;
+    }
+
+    // 단방향 해시 알고리즘(SHA-256)을 이용한 비밀번호 암호화 헬퍼 메서드
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(password.getBytes());
+            byte[] byteData = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : byteData) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("비밀번호 암호화 알고리즘을 찾을 수 없습니다.", e);
         }
     }
 }

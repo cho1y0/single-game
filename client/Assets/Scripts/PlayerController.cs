@@ -16,6 +16,10 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        
+        // 탑뷰 RPG이므로 물리 충돌 시 캐릭터가 빙글빙글 도는 것을 완벽히 방지합니다.
+        rb.freezeRotation = true;
+        rb.gravityScale = 0f; // 중력의 영향도 받지 않도록 확실히 고정
     }
 
     private void Update()
@@ -25,11 +29,14 @@ public class PlayerController : MonoBehaviour
         // 새로운 Input System을 이용한 키보드 입력 받기
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) movement.x = 1;
-            else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) movement.x = -1;
+            // 반대 방향키를 동시에 누르면 서로 상쇄(0)되어 자연스럽게 멈추도록 수식 계산
+            float moveX = (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed ? 1f : 0f) 
+                        - (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed ? 1f : 0f);
+            
+            float moveY = (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed ? 1f : 0f) 
+                        - (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed ? 1f : 0f);
 
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) movement.y = 1;
-            else if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) movement.y = -1;
+            movement = new Vector2(moveX, moveY);
         }
     }
 
